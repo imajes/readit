@@ -16,7 +16,8 @@ group :development, :test do
 end
 gem 'oauth'
 gem 'hashie'
-
+gem 'debugger'
+gem 'awesome_print'
 
 # Specify your gem's dependencies in readit.gemspec
 gemspec

@@ -47,16 +47,17 @@ module Readit
 
     attr_reader :access_token
 
-    SITE_URL = 'https://www.readability.com/'
+    SITE_URL = 'https://www.readability.com'
+    API_PATH = "/api/rest/v1"
 
     # Retrieve the base API URI - information about subresources.
     def resource_info
       request(:get,'/')
     end
 
-    # Retrieve a single Article, including its content. 
+    # Retrieve a single Article, including its content.
     # api rest address: /articles/{article_id}
-    # @param article_id the article_id 
+    # @param article_id the article_id
     def article(article_id)
       request(:get,"/articles/#{article_id}")
     end
@@ -92,7 +93,7 @@ module Readit
       end
     end
 
-    # Add a bookmark. Returns 202 Accepted, meaning that the bookmark has been added but no guarantees are made as 
+    # Add a bookmark. Returns 202 Accepted, meaning that the bookmark has been added but no guarantees are made as
     # to whether the article proper has yet been parsed.
     # @param args args to bookmark a url
     # url the address to bookmark
@@ -135,11 +136,11 @@ module Readit
       update_bookmark(bookmark_id,:favorite=>1)
     end
 
-    # Remove a single bookmark from this user's history. 
+    # Remove a single bookmark from this user's history.
     # NOTE: THIS IS PROBABLY NOT WHAT YOU WANT. This is particularly for the case where a user accidentally bookmarks
-    # something they have no intention of reading or supporting. 
+    # something they have no intention of reading or supporting.
     # In almost all cases, you'll probably want to use archive by POSTing archive=1 to this bookmark.
-    # If you use DELETE and this months bookmarks have not yet been tallied, 
+    # If you use DELETE and this months bookmarks have not yet been tallied,
     # the site associated with this bookmark will not receive any contributions for this bookmark.
     # Use archive! It's better.
     # Returns a 204 on successful remove.
@@ -160,12 +161,13 @@ module Readit
       request(:get,"/users/_current")
     end
 
-    private 
+    private
     def request(method,url,args={})
-      consumer = ::OAuth::Consumer.new(Readit::Config.consumer_key,Readit::Config.consumer_secret,:site=>SITE_URL)
-      atoken = ::OAuth::AccessToken.new(consumer, @access_token, @access_token_secret)
-      #response = client.send(method,"/api/rest/v1#{url}",args.merge!('oauth_token'=>@access_token,'oauth_token_secret'=>'5VEnMNPr7Q4393wxAYdnTWnpWwn7bHm4','oauth_consumer_key'=>'lidongbin','oauth_consumer_secret'=>'gvjSYqH4PLWQtQG8Ywk7wKZnEgd4xf2C'))
-      response = atoken.send(method,"/api/rest/v1#{url}",args)
+      consumer = ::OAuth::Consumer.new(Readit::Config.consumer_key, Readit::Config.consumer_secret, :site => SITE_URL, :access_token_path => "/api/rest/v1/oauth/access_token")
+      atoken   = consumer.get_access_token(nil, {}, {:x_auth_mode => 'client_auth', :x_auth_username => @access_token, :x_auth_password => @access_token_secret})
+
+      response = atoken.send(method, "#{API_PATH}#{url}", args)
+
       if block_given?
         yield response
       else
